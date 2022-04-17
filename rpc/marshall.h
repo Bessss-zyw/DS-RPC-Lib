@@ -57,7 +57,7 @@ class marshall {
 		}
 
 		~marshall() { 
-			if (_buf) free(_buf); 
+			// if (_buf) free(_buf); 
 		}
 
 		int size() { return _ind;}
@@ -137,7 +137,7 @@ class unmarshall {
 			take_content(s);
 		}
 		~unmarshall() {
-			if (_buf) free(_buf);
+			// if (_buf) free(_buf);
 		}
 
 		//take contents from another unmarshall object
