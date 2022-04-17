@@ -15,7 +15,7 @@ class demo_server {
   demo_server() {};
   ~demo_server() {};
   demo_protocol::status stat(int clt, demo_protocol::demoVar a, int &);
-  demo_protocol::status process_string(int clt, demo_protocol::demoVar start, demo_protocol::demoString str, int &);
+  demo_protocol::status process_string(int clt, demo_protocol::demoVar start, demo_protocol::demoString str, demo_protocol::demoString &);
   // for illustration only
       // demo_protocol::status rpcA(int clt, demo_protocol::demoVar a, int &);
       // demo_protocol::status rpcB(int clt, demo_protocol::demoVar a, int &);
@@ -31,12 +31,13 @@ demo_server::stat(int clt, demo_protocol::demoVar var, int &r)
 }
 
 demo_protocol::status
-demo_server::process_string(int clt, demo_protocol::demoVar start, demo_protocol::demoString var, int &r)
+demo_server::process_string(int clt, demo_protocol::demoVar start, demo_protocol::demoString var, demo_protocol::demoString &r)
 {
   demo_protocol::status ret = demo_protocol::OK;
   std::cout << "===RPC(client -> server) latency: " << (timer::get_usec() - (uint64_t)start) << std::endl;
   printf("process_string request from clt %d\n", clt);
-  r = 0;
+  size_t sz = (1 << 15);    // 32k
+  r.assign(sz, 0);
   return ret;
 }
 

@@ -20,8 +20,8 @@ class demo_client {
  public:
   demo_client(const char * port);
   virtual ~demo_client() {};
-  virtual demo_protocol::status stat(demo_protocol::demoVar);
-  virtual demo_protocol::status pass_string(demo_protocol::demoString);
+  virtual int stat(demo_protocol::demoVar);
+  virtual demo_protocol::demoString pass_string(demo_protocol::demoString);
 };
 
 demo_client::demo_client(const char* port)
@@ -41,9 +41,9 @@ demo_client::stat(demo_protocol::demoVar var)
   return r;
 }
 
-int
+demo_protocol::demoString
 demo_client::pass_string(demo_protocol::demoString str) {
-  int r = 0;
+  demo_protocol::demoString r;
   demo_protocol::status ret = cl->call(demo_protocol::pass_string, r, MAX_TIMEOUT, cl->id(), (demo_protocol::demoVar)timer::get_usec(), str);
   VERIFY (ret == demo_protocol::OK);
   return r;
@@ -69,17 +69,17 @@ main(int argc, char *argv[])
 		cout << "cannot open file!" << endl;
 		return 0;
 	}
-	string temp, res;
+	string temp, arg;
   while(getline(fin,temp)){
-      res+=temp;
-      res+='\n';
+      arg+=temp;
+      arg+='\n';
   }
 	fin.close();
 
   uint64_t start, end;
   start = timer::get_usec();
-  r = dc->pass_string(res);
+  std::string res = dc->pass_string(arg);
   end = timer::get_usec();
-  printf ("pass %lu buff, returned %d\n", res.size(), r);
+  printf ("pass %lu buff, returns %lu buff\n", arg.size(), res.size());
   printf("RPC (RTT) latency: %lu usec\n", (end - start));
 }
