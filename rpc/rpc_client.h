@@ -49,32 +49,8 @@ public:
     template<class R>
         int call_m(unsigned int proc, marshall &req, R & r, TO to);
 
-    template<class R>
-        int call(unsigned int proc, R & r, TO to); 
-    template<class R, class A1>
-        int call(unsigned int proc, const A1 & a1, R & r, TO to); 
-    template<class R, class A1, class A2>
-        int call(unsigned int proc, const A1 & a1, const A2 & a2, R & r, 
-                TO to); 
-    template<class R, class A1, class A2, class A3>
-        int call(unsigned int proc, const A1 & a1, const A2 & a2, const A3 & a3, 
-                R & r, TO to); 
-    template<class R, class A1, class A2, class A3, class A4>
-        int call(unsigned int proc, const A1 & a1, const A2 & a2, const A3 & a3, 
-                const A4 & a4, R & r, TO to);
-    template<class R, class A1, class A2, class A3, class A4, class A5>
-        int call(unsigned int proc, const A1 & a1, const A2 & a2, const A3 & a3, 
-                const A4 & a4, const A5 & a5, R & r, TO to); 
-    template<class R, class A1, class A2, class A3, class A4, class A5,
-        class A6>
-            int call(unsigned int proc, const A1 & a1, const A2 & a2, const A3 & a3, 
-                    const A4 & a4, const A5 & a5, const A6 & a6,
-                    R & r, TO to); 
-    template<class R, class A1, class A2, class A3, class A4, class A5, 
-        class A6, class A7>
-            int call(unsigned int proc, const A1 & a1, const A2 & a2, const A3 & a3, 
-                    const A4 & a4, const A5 & a5, const A6 &a6, const A7 &a7,
-                    R & r, TO to); 
+    template<class R, class... Args>
+        int call(unsigned int proc, R & r, TO to, const Args&... args);
 };
 
 
@@ -95,98 +71,11 @@ rpcc::call_m(unsigned int proc, marshall &req, R & r, TO to)
 	return intret;
 }
 
-template<class R> int
-rpcc::call(unsigned int proc, R & r, TO to) 
+template<class R, class... Args> int
+rpcc::call(unsigned int proc, R & r, TO to, const Args&... args) 
 {
 	marshall m;
-	return call_m(proc, m, r, to);
-}
-
-template<class R, class A1> int
-rpcc::call(unsigned int proc, const A1 & a1, R & r, TO to) 
-{
-	marshall m;
-	m << a1;
-	return call_m(proc, m, r, to);
-}
-
-template<class R, class A1, class A2> int
-rpcc::call(unsigned int proc, const A1 & a1, const A2 & a2,
-		R & r, TO to) 
-{
-	marshall m;
-	m << a1;
-	m << a2;
-	return call_m(proc, m, r, to);
-}
-
-template<class R, class A1, class A2, class A3> int
-rpcc::call(unsigned int proc, const A1 & a1, const A2 & a2,
-		const A3 & a3, R & r, TO to) 
-{
-	marshall m;
-	m << a1;
-	m << a2;
-	m << a3;
-	return call_m(proc, m, r, to);
-}
-
-template<class R, class A1, class A2, class A3, class A4> int
-rpcc::call(unsigned int proc, const A1 & a1, const A2 & a2,
-		const A3 & a3, const A4 & a4, R & r, TO to) 
-{
-	marshall m;
-	m << a1;
-	m << a2;
-	m << a3;
-	m << a4;
-	return call_m(proc, m, r, to);
-}
-
-template<class R, class A1, class A2, class A3, class A4, class A5> int
-rpcc::call(unsigned int proc, const A1 & a1, const A2 & a2,
-		const A3 & a3, const A4 & a4, const A5 & a5, R & r, TO to) 
-{
-	marshall m;
-	m << a1;
-	m << a2;
-	m << a3;
-	m << a4;
-	m << a5;
-	return call_m(proc, m, r, to);
-}
-
-template<class R, class A1, class A2, class A3, class A4, class A5,
-	class A6> int
-rpcc::call(unsigned int proc, const A1 & a1, const A2 & a2,
-		const A3 & a3, const A4 & a4, const A5 & a5, 
-		const A6 & a6, R & r, TO to) 
-{
-	marshall m;
-	m << a1;
-	m << a2;
-	m << a3;
-	m << a4;
-	m << a5;
-	m << a6;
-	return call_m(proc, m, r, to);
-}
-
-template<class R, class A1, class A2, class A3, class A4, class A5,
-	class A6, class A7> int
-rpcc::call(unsigned int proc, const A1 & a1, const A2 & a2,
-		const A3 & a3, const A4 & a4, const A5 & a5, 
-		const A6 & a6, const A7 & a7,
-		R & r, TO to) 
-{
-	marshall m;
-	m << a1;
-	m << a2;
-	m << a3;
-	m << a4;
-	m << a5;
-	m << a6;
-	m << a7;
+	(m << ... << args);
 	return call_m(proc, m, r, to);
 }
 

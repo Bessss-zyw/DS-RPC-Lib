@@ -1,6 +1,6 @@
 RPC=./rpc
 CXX = g++
-CXXFLAGS = -std=c++11 -O0 -g -MMD -Wall -I. -I$(RPC) -D_FILE_OFFSET_BITS=64 -no-pie
+CXXFLAGS = -std=c++17 -O0 -g -MMD -Wall -I. -I$(RPC) -D_FILE_OFFSET_BITS=64 -no-pie
 RPCLIB=librpc.a
 LDFLAGS = -L. -L/usr/local/lib
 LDLIBS = -lpthread 

@@ -80,7 +80,7 @@ int
 rpcc::bind(TO to)
 {
 	int sid;
-	int ret = call(rpc_const::bind, 0, sid, to);
+	int ret = call(rpc_const::bind, sid, to, 0);
 	if(ret == 0){
 		bind_done_ = true;      // must bind first
 		sid_ = sid;

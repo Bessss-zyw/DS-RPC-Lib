@@ -36,7 +36,7 @@ int
 demo_client::stat(demo_protocol::demoVar var)
 {
   int r = 0;
-  demo_protocol::status ret = cl->call(demo_protocol::stat, cl->id(), var, r, MAX_TIMEOUT);
+  demo_protocol::status ret = cl->call(demo_protocol::stat, r, MAX_TIMEOUT, cl->id(), var);
   VERIFY (ret == demo_protocol::OK);
   return r;
 }
@@ -44,7 +44,7 @@ demo_client::stat(demo_protocol::demoVar var)
 int
 demo_client::pass_string(demo_protocol::demoString str) {
   int r = 0;
-  demo_protocol::status ret = cl->call(demo_protocol::pass_string, cl->id(), (demo_protocol::demoVar)timer::get_usec(), str, r, MAX_TIMEOUT);
+  demo_protocol::status ret = cl->call(demo_protocol::pass_string, r, MAX_TIMEOUT, cl->id(), (demo_protocol::demoVar)timer::get_usec(), str);
   VERIFY (ret == demo_protocol::OK);
   return r;
 }
