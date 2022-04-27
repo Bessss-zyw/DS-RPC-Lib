@@ -20,7 +20,7 @@ struct caller {
 };
 
 // RPC client endpoint
-class RPCClient {
+class RPCC {
 private:
     sockaddr_in dst_;       // server address
 	pthread_t poll_th_;     // polling thread
@@ -39,8 +39,8 @@ private:
 	void process_msg(Connection *c, char *buf, size_t sz);  // process single msg from server
 
 public:
-    RPCClient(const char *host, const char *port);
-    ~RPCClient();
+    RPCC(const char *host, const char *port);
+    ~RPCC();
 	unsigned int id() { return cid_; }
     int bind(TO to = rpc_const::to_max);    // a sample RPC call to bind with server
 	void poll_and_push();			        // constantly do poll and push
@@ -55,14 +55,14 @@ public:
 
 
 template<class R> int 
-RPCClient::call_m(unsigned int proc, marshall &req, R & r, TO to) 
+RPCC::call_m(unsigned int proc, marshall &req, R & r, TO to) 
 {
 	unmarshall u;
 	int intret = call1(proc, req, u, to);
 	if (intret < 0) return intret;
 	u >> r;
 	if(u.okdone() != true) {
-                fprintf(stderr, "RPCClient::call_m: failed to unmarshall the reply."
+                fprintf(stderr, "RPCC::call_m: failed to unmarshall the reply."
                        "You are probably calling RPC 0x%x with wrong return "
                        "type.\n", proc);
                 VERIFY(0);
@@ -72,7 +72,7 @@ RPCClient::call_m(unsigned int proc, marshall &req, R & r, TO to)
 }
 
 template<class R, class... Args> int
-RPCClient::call(unsigned int proc, R & r, TO to, const Args&... args) 
+RPCC::call(unsigned int proc, R & r, TO to, const Args&... args) 
 {
 	marshall m;
 	(m << ... << args);

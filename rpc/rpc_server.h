@@ -14,7 +14,7 @@
 #include "utils/slock.h"
 
 // RPC server endpoint
-class RPCServer {
+class RPCS {
 	int port_;		// the port to listen on
 	int tcp_; 		// file desciptor for accepting connection
 	unsigned int sid_;						// server id
@@ -35,8 +35,8 @@ class RPCServer {
 	void reg1(unsigned int proc, handler *h);		// register a single handler
 
 public:
-	RPCServer(unsigned int port, int counts=0);
-	~RPCServer();
+	RPCS(unsigned int port, int counts=0);
+	~RPCS();
 
 	// a default RPC handler for client binding
 	int rpcbind(int a, int &r);
@@ -78,7 +78,7 @@ public:
 };
 
 // template<class S, class R, class ...Args> void
-// RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(R & r, const Args ... args))
+// RPCS::reg(unsigned int proc, S*sob, int (S::*meth)(R & r, const Args ... args))
 // {
 // 	class h1 : public handler {
 // 		private:
@@ -103,7 +103,7 @@ public:
 
 // -----------register a handler-----------
 template<class S, class A1, class R> void
-RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, R & r))
+RPCS::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, R & r))
 {
 	class h1 : public handler {
 		private:
@@ -127,7 +127,7 @@ RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, R & r))
 }
 
 template<class S, class A1, class A2, class R> void
-RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCS::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			R & r))
 {
 	class h1 : public handler {
@@ -154,7 +154,7 @@ RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2
 }
 
 template<class S, class A1, class A2, class A3, class R> void
-RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCS::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			const A3 a3, R & r))
 {
 	class h1 : public handler {
@@ -183,7 +183,7 @@ RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2
 }
 
 template<class S, class A1, class A2, class A3, class A4, class R> void
-RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCS::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			const A3 a3, const A4 a4, 
 			R & r))
 {
@@ -216,7 +216,7 @@ RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2
 }
 
 template<class S, class A1, class A2, class A3, class A4, class A5, class R> void
-RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCS::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			const A3 a3, const A4 a4, 
 			const A5 a5, R & r))
 {
@@ -252,7 +252,7 @@ RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2
 }
 
 template<class S, class A1, class A2, class A3, class A4, class A5, class A6, class R> void
-RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCS::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			const A3 a3, const A4 a4, 
 			const A5 a5, const A6 a6, 
 			R & r))
@@ -292,7 +292,7 @@ RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2
 
 template<class S, class A1, class A2, class A3, class A4, class A5, 
 	class A6, class A7, class R> void
-RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCS::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			const A3 a3, const A4 a4, 
 			const A5 a5, const A6 a6,
 			const A7 a7, R & r))

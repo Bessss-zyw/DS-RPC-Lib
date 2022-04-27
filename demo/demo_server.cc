@@ -63,7 +63,7 @@ int main(int argc, char const *argv[])
     }
 
     demo_server ds;  
-    RPCServer server(atoi(argv[1]), count);
+    RPCS server(atoi(argv[1]), count);
     server.reg(demo_protocol::stat, &ds, &demo_server::stat);
     server.reg(demo_protocol::pass_string, &ds, &demo_server::process_string);
 

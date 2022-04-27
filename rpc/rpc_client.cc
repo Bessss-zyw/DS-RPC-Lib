@@ -18,7 +18,7 @@ caller::~caller()
 // -----------public API-----------
 void *poll_thread(void *arg)
 {
-    RPCClient *c = (RPCClient *)arg;
+    RPCC *c = (RPCC *)arg;
 	while (1) {
     	c->poll_and_push();
 		if (errno == EINTR) break;
@@ -26,7 +26,7 @@ void *poll_thread(void *arg)
     return NULL;
 }
 
-RPCClient::RPCClient(const char *host, const char *port)
+RPCC::RPCC(const char *host, const char *port)
     :rid_(1), sid_(0), bind_done_(false)
 {
     // parse address
@@ -59,7 +59,7 @@ RPCClient::RPCClient(const char *host, const char *port)
     // connect to target server
     ch = connect_to_dst(dst_);
     if (!ch) {
-        printf("RPCClient::RPCClient fail to connect with remote addr\n");
+        printf("RPCC::RPCC fail to connect with remote addr\n");
         exit(0);
     }
 
@@ -71,7 +71,7 @@ RPCClient::RPCClient(const char *host, const char *port)
 	}
 }
 
-RPCClient::~RPCClient()
+RPCC::~RPCC()
 {
     if (ch) ch->closeCh();
     VERIFY(pthread_mutex_destroy(&m_) == 0);
@@ -79,7 +79,7 @@ RPCClient::~RPCClient()
 }
 
 int
-RPCClient::bind(TO to)
+RPCC::bind(TO to)
 {
 	int sid;
 	int ret = call(rpc_const::bind, sid, to, 0);
@@ -87,27 +87,27 @@ RPCClient::bind(TO to)
 		bind_done_ = true;      // must bind first
 		sid_ = sid;
 	} else {
-		printf("RPCClient::bind %s failed %d\n", inet_ntoa(dst_.sin_addr), ret);
+		printf("RPCC::bind %s failed %d\n", inet_ntoa(dst_.sin_addr), ret);
 	}
 	return ret;
 };
 
 void
-RPCClient::poll_and_push() {
-    // printf("---RPCClient::poll_and_push--- on fd_set: (%d) \n", ch->channo());
+RPCC::poll_and_push() {
+    // printf("---RPCC::poll_and_push--- on fd_set: (%d) \n", ch->channo());
 
 	int fd_ = ch->channo();
 	fd_set rfds;
 	FD_SET(fd_, &rfds);
 
 	int ret = select(fd_ + 1, &rfds, NULL, NULL, NULL);
-	// printf("RPCClient::poll_and_push %d socket ready...\n", ret);
+	// printf("RPCC::poll_and_push %d socket ready...\n", ret);
 
 	if (ret < 0) {
 		if (errno == EINTR) {
 			return;
 		} else {
-			printf("RPCClient::poll_and_push failure, errno = %d\n", errno);
+			printf("RPCC::poll_and_push failure, errno = %d\n", errno);
 			VERIFY(0);
 		}
 	}
@@ -123,14 +123,14 @@ RPCClient::poll_and_push() {
 
 // -----------private func-----------
 int
-RPCClient::call1(unsigned int proc, marshall &req, unmarshall &rep, TO to)
+RPCC::call1(unsigned int proc, marshall &req, unmarshall &rep, TO to)
 {
-	// printf("---RPCClient::call1(proc = %x, to = %d)---\n", proc, to);
+	// printf("---RPCC::call1(proc = %x, to = %d)---\n", proc, to);
 
     // check bind
     if((proc != rpc_const::bind && !bind_done_) ||
             (proc == rpc_const::bind && bind_done_)){
-        printf("RPCClient::call1 RPCClient has not been bound to dst or binding twice\n");
+        printf("RPCC::call1 RPCC has not been bound to dst or binding twice\n");
         return rpc_const::bind_failure;
     }
 
@@ -149,7 +149,7 @@ RPCClient::call1(unsigned int proc, marshall &req, unmarshall &rep, TO to)
     // send msg to dst server
     VERIFY(ch);
     ch->send(req.cstr(), req.size());
-    // printf("RPCClient::call1 [CLT %u] just sent req rid %u(proc %x)\n", cid_, ca.rid, proc); 
+    // printf("RPCC::call1 [CLT %u] just sent req rid %u(proc %x)\n", cid_, ca.rid, proc); 
 
     // wait for reply
     while (!ca.done)
@@ -162,9 +162,9 @@ RPCClient::call1(unsigned int proc, marshall &req, unmarshall &rep, TO to)
 			finalDDL.tv_sec = 0;
 		}
 
-        // printf("RPCClient:call1: wait for reply\n");
+        // printf("RPCC:call1: wait for reply\n");
         if(pthread_cond_timedwait(&ca.c, &ca.m, &nextDDL) == ETIMEDOUT){
-            printf("RPCClient::call1: timeout\n");
+            printf("RPCC::call1: timeout\n");
             // return rpc_const::timeout_failure;
         }
     }
@@ -173,27 +173,27 @@ RPCClient::call1(unsigned int proc, marshall &req, unmarshall &rep, TO to)
     ScopedLock ml(&m_);
     calls_.erase(ca.rid);
 
-    // printf("RPCClient::call1: reply received\n");
+    // printf("RPCC::call1: reply received\n");
     return ca.result;
 }
 
 void
-RPCClient::process_msg(Connection *c, char *buf, size_t sz)
+RPCC::process_msg(Connection *c, char *buf, size_t sz)
 {
-	// printf("---RPCClient::process_msg(buf = %p, sz = %lu)---\n", buf, sz);
+	// printf("---RPCC::process_msg(buf = %p, sz = %lu)---\n", buf, sz);
     // unpack header
     unmarshall rep(buf, sz);
 	reply_header h;
 	rep.unpack_reply_header(&h);
 
 	if(!rep.ok()){
-		printf("RPCClient:process_msg unmarshall reply header failed!!!\n");
+		printf("RPCC:process_msg unmarshall reply header failed!!!\n");
 		return;
 	}
 
 	ScopedLock ml(&m_);
 	if(calls_.find(h.rid) == calls_.end()){
-		printf("RPCClient::process_msg rid %d no pending request\n", h.rid);
+		printf("RPCC::process_msg rid %d no pending request\n", h.rid);
 		return;
 	}
 	caller *ca = calls_[h.rid];
@@ -204,7 +204,7 @@ RPCClient::process_msg(Connection *c, char *buf, size_t sz)
 		ca->un->take_in(rep);
 		ca->result = h.result;
 		if(ca->result < 0)
-			printf("RPCClient::process_msg: RPC reply error for rid %d (stat = %d)\n", h.rid, ca->result);
+			printf("RPCC::process_msg: RPC reply error for rid %d (stat = %d)\n", h.rid, ca->result);
 		ca->done = 1;
 	}
 

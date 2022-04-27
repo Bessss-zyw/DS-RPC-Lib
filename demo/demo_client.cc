@@ -16,7 +16,7 @@ using namespace std;
 // Client interface to the demo server
 class demo_client {
  protected:
-  RPCClient *cl;
+  RPCC *cl;
  public:
   demo_client(const char * port);
   virtual ~demo_client() {};
@@ -26,7 +26,7 @@ class demo_client {
 
 demo_client::demo_client(const char* port)
 {
-  cl = new RPCClient("127.0.0.1", port);
+  cl = new RPCC("127.0.0.1", port);
   if (cl->bind() < 0) {
     printf("demo_client: call bind\n");
   }
