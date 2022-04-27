@@ -45,6 +45,9 @@ public:
 	void start();
 
 	// TODO: variable-length parameter list
+	// template<class S, class R, class ...Args>
+	// 	void reg(unsigned int proc, S*, int (S::*meth)(R & r, const Args ... args));
+
 	// -----------register a handler of different parameters-----------
 	template<class S, class A1, class R>
 		void reg(unsigned int proc, S*, int (S::*meth)(const A1 a1, R & r));
@@ -74,6 +77,29 @@ public:
 						R & r));
 };
 
+// template<class S, class R, class ...Args> void
+// RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(R & r, const Args ... args))
+// {
+// 	class h1 : public handler {
+// 		private:
+// 			S * sob;
+// 			int (S::*meth)(R & r, const Args ... args);
+// 		public:
+// 			h1(S *xsob, int (S::*xmeth)(R & r, const Args ... args))
+// 				: sob(xsob), meth(xmeth) { }
+// 			int fn(unmarshall &input, marshall &ret) {
+// 				Args ... args;
+// 				R r;
+// 				(input >> ... >> args);
+// 				if(!input.okdone())
+// 					return rpc_const::unmarshal_args_failure;
+// 				int b = (sob->*meth)(r, args);
+// 				ret << r;
+// 				return b;
+// 			}
+// 	};
+// 	reg1(proc, new h1(sob, meth));
+// }
 
 // -----------register a handler-----------
 template<class S, class A1, class R> void

@@ -23,6 +23,7 @@ class demo_server {
 
 demo_protocol::status
 demo_server::stat(int clt, demo_protocol::demoVar var, int &r)
+// demo_server::stat(int &r, int clt, demo_protocol::demoVar var)
 {
   printf("[Server] receive \"stat\" request from clt %d.\n", clt);
   demo_protocol::status ret = demo_protocol::OK;
@@ -32,6 +33,7 @@ demo_server::stat(int clt, demo_protocol::demoVar var, int &r)
 
 demo_protocol::status
 demo_server::process_string(int clt, demo_protocol::demoVar start, demo_protocol::demoString var, demo_protocol::demoString &r)
+// demo_server::process_string(demo_protocol::demoString &r, int clt, demo_protocol::demoVar start, demo_protocol::demoString var)
 {
   printf("[Server] receive \"process_string\" request from clt %d.\n", clt);
   printf("RPC(client->server) latency: %lu usec.\n", (timer::get_usec() - (uint64_t)start));
