@@ -7,7 +7,7 @@
 
 
 // -----------public API-----------
-rpcs::rpcs(unsigned int port, int counts)
+RPCServer::RPCServer(unsigned int port, int counts)
 	:port_(port)
 {
 	// single thread, no need for lock
@@ -20,11 +20,11 @@ rpcs::rpcs(unsigned int port, int counts)
 	sid_ = random();
 	
 	FD_ZERO(&fds);
-	reg(rpc_const::bind, this, &rpcs::rpcbind);
+	reg(rpc_const::bind, this, &RPCServer::rpcbind);
 	VERIFY(tcp_conn(port_));
 }
 
-rpcs::~rpcs()
+RPCServer::~RPCServer()
 {
 	// close all connections
 	close(tcp_);
@@ -34,16 +34,16 @@ rpcs::~rpcs()
 
 // rpc handler
 int 
-rpcs::rpcbind(int a, int &r)
+RPCServer::rpcbind(int a, int &r)
 {
-	printf("rpcs::rpcbind called return sid %u\n", sid_);
+	// printf("RPCServer::rpcbind called return sid %u\n", sid_);
 	r = sid_;
 	return 0;
 }
 
 // start processing messages on port
 void
-rpcs::start()
+RPCServer::start()
 {
 	// constantly do polling pushing and processing
 	while (1) {
@@ -55,9 +55,9 @@ rpcs::start()
 	}
 }
 
-// -----------for connection-----------
+// -----------private func-----------
 void
-rpcs::reg1(unsigned int proc, handler *h)
+RPCServer::reg1(unsigned int proc, handler *h)
 {
 	VERIFY(procs_.count(proc) == 0);
 	procs_[proc] = h;
@@ -65,7 +65,7 @@ rpcs::reg1(unsigned int proc, handler *h)
 }
 
 bool 
-rpcs::tcp_conn(int port)
+RPCServer::tcp_conn(int port)
 {
 	struct sockaddr_in sin;
 	memset(&sin, 0, sizeof(sin));
@@ -92,7 +92,7 @@ rpcs::tcp_conn(int port)
 		return false;
 	}
 
-	printf("tcpsconn::tcpsconn listen on %d %d\n", port, sin.sin_port);
+	// printf("RPCServer::tcpsconn listen on %d %d\n", port, sin.sin_port);
 	return true;
 
 	// if (pipe(pipe_) < 0) {
@@ -106,32 +106,32 @@ rpcs::tcp_conn(int port)
 }
 
 void
-rpcs::connect()
+RPCServer::connect()
 {
-	printf("---rpcs::connect---\n");
+	// printf("---RPCServer::connect---\n");
 	sockaddr_in sin;
 	socklen_t slen = sizeof(sin);
 	// int s1 = accept4(tcp_, (sockaddr *)&sin, &slen, SOCK_NONBLOCK); 
 	int s1 = accept(tcp_, (sockaddr *)&sin, &slen); 
 	if (s1 < 0) {
-		perror("tcpsconn::accept_conn error");
+		printf("RPCServer::connect failure, errno = %d\n", errno);
 		// pthread_exit(NULL);
 		return;
 	}
 
-	printf("accept_loop got connection fd=%d %s:%d\n", 
-			s1, inet_ntoa(sin.sin_addr), ntohs(sin.sin_port));
+	// printf("RPCServer::connect got connection fd=%d %s:%d\n", 
+	// 		s1, inet_ntoa(sin.sin_addr), ntohs(sin.sin_port));
 
 	// add to meta
-	conns_[s1] = new connection(s1);
+	conns_[s1] = new Connection(s1);
 	FD_SET(s1, &fds);
 	if (max_fd < s1) max_fd = s1;
 }
 
 void
-rpcs::disconnect(int fd)
+RPCServer::disconnect(int fd)
 {
-	printf("---rpcs::disconnect(fd = %d)---\n", fd);
+	// printf("---RPCServer::disconnect(fd = %d)---\n", fd);
 	// fd should be in conns
 	auto res = conns_.find(fd);
 	VERIFY(res != conns_.end());
@@ -147,11 +147,11 @@ rpcs::disconnect(int fd)
 }
 
 void 
-rpcs::poll_and_push() 
+RPCServer::poll_and_push() 
 {
-	printf("---rpcs::poll_and_push--- on fd_set: (%d) ", tcp_);
-	for (auto &&conn : conns_) printf("%d ", conn.first);
-	printf("\n");
+	// printf("---RPCServer::poll_and_push--- on fd_set: (%d) ", tcp_);
+	// for (auto &&conn : conns_) printf("%d ", conn.first);
+	// printf("\n");
 
 	int max = tcp_ < max_fd? max_fd: tcp_;
 	fd_set rfds, wfds;
@@ -162,14 +162,13 @@ rpcs::poll_and_push()
 			FD_CLR(conn.first, &wfds);
 
 	int ret = select(max + 1, &rfds, &wfds, NULL, NULL);
-	printf("%d socket ready...\n", ret);
+	// printf("RPCServer::poll_and_push %d socket ready...\n", ret);
 
 	if (ret < 0) {
 		if (errno == EINTR) {
 			return;
 		} else {
-			perror("accept_conn select:");
-			printf("tcpsconn::accept_conn failure errno %d\n",errno);
+			printf("RPCServer::poll_and_push select failure, errno %d\n",errno);
 			VERIFY(0);
 		}
 	}
@@ -182,9 +181,9 @@ rpcs::poll_and_push()
 }
 
 void
-rpcs::process()
+RPCServer::process()
 {
-	printf("---rpcs::process---\n");
+	// printf("---RPCServer::process---\n");
 	for (auto &&conn : conns_) {
 		// for each conn, process its rbuf queue
 		for (size_t i = 0; i < conn.second->rbuf_cnt(); i++) {
@@ -197,9 +196,9 @@ rpcs::process()
 }
 
 void
-rpcs::sweep()
+RPCServer::sweep()
 {
-	printf("---rpcs::sweep---\n");
+	// printf("---RPCServer::sweep---\n");
 
 	// find dead connections
 	std::vector<int> dump_fds;
@@ -213,9 +212,9 @@ rpcs::sweep()
 }
 
 void
-rpcs::process_msg(connection *c, char *buf, size_t sz)
+RPCServer::process_msg(Connection *c, char *buf, size_t sz)
 {
-	printf("---rpcs::process_msg(c = %d, buf = %p, sz = %lu)---\n", c->channo(), buf, sz);
+	// printf("---RPCServer::process_msg(c = %d, buf = %p, sz = %lu)---\n", c->channo(), buf, sz);
 	unmarshall req(buf, sz);
 
 	// unpack msg
@@ -223,12 +222,12 @@ rpcs::process_msg(connection *c, char *buf, size_t sz)
 	req.unpack_req_header(&h);
 	int proc = h.proc;
 	if(!req.ok()){
-		printf("rpcs:process_msg unmarshall header failed!!!\n");
+		printf("RPCServer:process_msg unmarshall header failed!!!\n");
 		// c->decref();
 		return;
 	}
-	printf("rpcs::process_msg: rpc %u (proc %x) from clt %u for srv instance %u \n",
-			h.rid, proc, h.clt_id, h.srv_id);
+	// printf("RPCServer::process_msg: rpc %u (proc %x) from clt %u for srv instance %u \n",
+	// 		h.rid, proc, h.clt_id, h.srv_id);
 
 	// reply
 	marshall rep;
@@ -236,28 +235,26 @@ rpcs::process_msg(connection *c, char *buf, size_t sz)
 
 	// is client sending to an old instance of server?
 	if(h.srv_id != 0 && h.srv_id != sid_){
-		printf("rpcs::dispatch: rpc for an old server instance %u (current %u) proc %x\n", h.srv_id, sid_, h.proc);
+		printf("RPCServer::process_msg receive RPC for an old server instance %u (current %u) proc %x\n", h.srv_id, sid_, h.proc);
 		rh.result = rpc_const::oldsrv_failure;
 		goto send_reply;
 	}
 	
 	// is RPC proc a registered procedure?
 	if(procs_.count(proc) < 1){
-		printf("rpcs::dispatch: unknown proc %x.\n", proc);
-		rh.result = rpc_const::oldsrv_failure;
+		printf("RPCServer::process_msg unknown proc %x.\n", proc);
+		rh.result = rpc_const::unknown_proc;
 		goto send_reply;
-		// rep.pack_reply_header(rh);
-		// c->send(rep.cstr(),rep.size());
-		// return;
 	}
 
 	handler *f;
 	f = procs_[proc];
 	rh.result = f->fn(req, rep);
 	if (rh.result == rpc_const::unmarshal_args_failure) {
-		fprintf(stderr, "rpcs::dispatch: failed to unmarshall the arguments. You are"
-				" probably calling RPC 0x%x with wrong types of arguments.\n", proc);
+		printf("RPCServer::process_msg failed to unmarshall the arguments of type 0x%x RPC!\n", proc);
 		// VERIFY(0);
+		rh.result = rpc_const::unmarshal_args_failure;
+		goto send_reply;
 	}
 	VERIFY(rh.result >= 0);
 
@@ -266,8 +263,8 @@ send_reply:
 	int send_sz;
 	rep.pack_reply_header(rh);
 	rep.take_buf(&send_buf, &send_sz);
-	printf("rpcs::dispatch: sending reply of size %d for rpc %u, proc %x result %d, clt %u\n",
-			send_sz, h.rid, proc, rh.result, h.clt_id);
+	// printf("RPCServer::process_msg sending reply of size %d for rpc %u, proc %x result %d, clt %u\n",
+	// 		send_sz, h.rid, proc, rh.result, h.clt_id);
 	c->send(send_buf, send_sz);
 }
 

@@ -2,7 +2,7 @@
 #include "utils/slock.h"
 #include "connection.h"
 
-connection::connection(int fd)
+Connection::Connection(int fd)
     :fd_(fd), dead_(false)
 {
 	VERIFY(pthread_mutex_init(&m_,0) == 0);
@@ -10,7 +10,7 @@ connection::connection(int fd)
 	VERIFY(pthread_mutex_init(&rm_,0) == 0);
 }
  
-connection::~connection()
+Connection::~Connection()
 {
     // free buffer
     wbuf.clear();
@@ -33,47 +33,47 @@ connection::~connection()
 }
 
 bool
-connection::is_dead()
+Connection::is_dead()
 {
 	return dead_;
 }
 
 int
-connection::channo()
+Connection::channo()
 {
 	return fd_;
 }
 
 void
-connection::closeCh()
+Connection::closeCh()
 {
 	ScopedLock lock(&m_);
 	close(fd_);
 }
 
 bool 
-connection::empty_wbuf()
+Connection::empty_wbuf()
 {
 	ScopedLock lock(&wm_);
 	return (wbuf.empty() && wbufq.empty());
 }
 
 size_t
-connection::rbuf_cnt()
+Connection::rbuf_cnt()
 {
 	ScopedLock lock(&rm_);
 	return rbufq.size();
 }
 
 size_t
-connection::wbuf_cnt()
+Connection::wbuf_cnt()
 {
 	ScopedLock lock(&wm_);
 	return wbufq.size();
 }
 
 buffer
-connection::next_rbuf()
+Connection::next_rbuf()
 {
 	ScopedLock lock(&rm_);
 	buffer buf = rbufq.front();
@@ -82,7 +82,7 @@ connection::next_rbuf()
 }
 
 buffer
-connection::next_wbuf()
+Connection::next_wbuf()
 {
 	ScopedLock lock(&wm_);
 	buffer buf = wbufq.front();
@@ -91,23 +91,23 @@ connection::next_wbuf()
 }
 
 void
-connection::add_rbuf(buffer buf)
+Connection::add_rbuf(buffer buf)
 {
 	ScopedLock lock(&rm_);
 	rbufq.push(buf);
 }
 
 void
-connection::add_wbuf(buffer buf)
+Connection::add_wbuf(buffer buf)
 {
 	ScopedLock lock(&wm_);
 	wbufq.push(buf);
 }
 
 bool
-connection::send(char *buf, size_t sz)
+Connection::send(char *buf, size_t sz)
 {
-	printf("---connection::send(buf = %p, sz = %lu)---\n", buf, sz);
+	// printf("---Connection::send(buf = %p, sz = %lu)---\n", buf, sz);
 	{
 		ScopedLock lock(&wm_);
 		wbufq.push(buffer(buf, sz));
@@ -119,9 +119,9 @@ connection::send(char *buf, size_t sz)
 }
 
 void 
-connection::read_cb()
+Connection::read_cb()
 {
-	printf("---connection::read_cb---\n");
+	// printf("---Connection::read_cb---\n");
 	if (dead_) return;
 
 	// when socket is ready for read
@@ -152,9 +152,9 @@ connection::read_cb()
 }
 
 void
-connection::write_cb()
+Connection::write_cb()
 {
-	printf("---connection::write_cb---\n");
+	// printf("---Connection::write_cb---\n");
 	if (dead_) return;
 
 	// when socket is ready for write
@@ -184,9 +184,9 @@ connection::write_cb()
 }
 
 bool 
-connection::read_msg()
+Connection::read_msg()
 {
-	printf("---connection::read_msg---\n");
+	// printf("---Connection::read_msg---\n");
     // allocate new buffer for new message
     if (!rbuf.sz) {
 		uint32_t sz, sz_raw;
@@ -198,7 +198,7 @@ connection::read_msg()
 			return false;
 		}
 		if (n > 0 && n!= sizeof(sz)) {
-			printf("connection::read_msg short read of sz\n");
+			printf("Connection::read_msg(fd_ %d) short read of sz\n", fd_);
 			return false;
 		}
 
@@ -207,7 +207,7 @@ connection::read_msg()
 
 		if (sz > MAX_MSG_SZ) {
 			char *tmpb = (char *)&sz_raw;
-			printf("connection::read_msg read msg TOO BIG %d network order=%x %x %x %x %x\n", sz, 
+			printf("Connection::read_msg(fd_ %d) read msg TOO BIG %d network order=%x %x %x %x %x\n", fd_, sz, 
 					sz_raw, tmpb[0],tmpb[1],tmpb[2],tmpb[3]);
 			return false;
 		}
@@ -221,14 +221,14 @@ connection::read_msg()
 	}
 
     // read data
-	printf("connection::read_msg try to read %d byte buffer from fd %d\n", (rbuf.sz - rbuf.solong), fd_);
+	// printf("Connection::read_msg try to read %d byte buffer from fd %d\n", (rbuf.sz - rbuf.solong), fd_);
 	int n = read(fd_, rbuf.buf + rbuf.solong, rbuf.sz - rbuf.solong);
-	printf("connection::read_msg read %d bytes\n", n);
+	// printf("Connection::read_msg read %d bytes\n", n);
 	if (n <= 0) {
 		if (errno == EAGAIN) return true;
 
         // reset rbuf for next message
-		printf("connection::read_msg fd_ %d failure errno = %d\n", fd_, errno);
+		printf("Connection::read_msg(fd_ %d) failure, errno = %d\n", fd_, errno);
         return false;
 	}
 	rbuf.solong += n;
@@ -236,9 +236,9 @@ connection::read_msg()
 }
 
 bool 
-connection::write_msg()
+Connection::write_msg()
 {
-	printf("---connection::write_msg---\n");
+	// printf("---Connection::write_msg---\n");
     VERIFY(wbuf.buf);
     VERIFY(wbuf.sz);
     if (wbuf.sz == wbuf.solong) return true;    // already finished
@@ -250,12 +250,12 @@ connection::write_msg()
 	}
 
     // write data
-	printf("before write, wbuf.buf[7] = %x\n", wbuf.buf[7]);
+	// printf("Connection::write_msg before write, wbuf.buf[7] = %x\n", wbuf.buf[7]);
 	int n = write(fd_, wbuf.buf + wbuf.solong, (wbuf.sz - wbuf.solong));
-	printf("connection::write_msg write %d bytes\n", n);
+	// printf("Connection::write_msg write %d bytes\n", n);
 	if (n < 0) {
 		if (errno != EAGAIN) {
-			printf("connection::write_msg fd_ %d failure errno=%d\n", fd_, errno);
+			printf("Connection::write_msg(fd_ %d) failure, errno = %d\n", fd_, errno);
 			wbuf.solong = -1;
 			wbuf.sz = 0;
 		}
@@ -270,7 +270,7 @@ connection::write_msg()
 }
 
 fd_set
-connection::get_fd_set()
+Connection::get_fd_set()
 {
 	fd_set rfds;
 	FD_ZERO(&rfds);
@@ -278,18 +278,18 @@ connection::get_fd_set()
 	return rfds;
 }
 
-// for creating connection to certain addr
-connection *
+// for creating Connection to certain addr
+Connection *
 connect_to_dst(const sockaddr_in &dst)
 {
 	int s= socket(AF_INET, SOCK_STREAM, 0);
 	int yes = 1;
 	setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(yes));
 	if(connect(s, (sockaddr*)&dst, sizeof(dst)) < 0) {
-		printf("rpcc::connect_to_dst failed to %s:%d\n", inet_ntoa(dst.sin_addr), (int)ntohs(dst.sin_port));
+		printf("Connection::connect_to_dst failed to connect to %s:%d\n", inet_ntoa(dst.sin_addr), (int)ntohs(dst.sin_port));
 		close(s);
 		return NULL;
 	}
-	printf("connect_to_dst fd=%d to dst %s:%d\n", s, inet_ntoa(dst.sin_addr), (int)ntohs(dst.sin_port));
-	return new connection(s);
+	// printf("connect_to_dst fd=%d to dst %s:%d\n", s, inet_ntoa(dst.sin_addr), (int)ntohs(dst.sin_port));
+	return new Connection(s);
 }

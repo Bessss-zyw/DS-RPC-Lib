@@ -24,8 +24,8 @@ class demo_server {
 demo_protocol::status
 demo_server::stat(int clt, demo_protocol::demoVar var, int &r)
 {
+  printf("[Server] receive \"stat\" request from clt %d.\n", clt);
   demo_protocol::status ret = demo_protocol::OK;
-  printf("stat request from clt %d\n", clt);
   r = 12345;
   return ret;
 }
@@ -33,16 +33,13 @@ demo_server::stat(int clt, demo_protocol::demoVar var, int &r)
 demo_protocol::status
 demo_server::process_string(int clt, demo_protocol::demoVar start, demo_protocol::demoString var, demo_protocol::demoString &r)
 {
+  printf("[Server] receive \"process_string\" request from clt %d.\n", clt);
+  printf("RPC(client->server) latency: %lu usec.\n", (timer::get_usec() - (uint64_t)start));
   demo_protocol::status ret = demo_protocol::OK;
-  std::cout << "===RPC(client -> server) latency: " << (timer::get_usec() - (uint64_t)start) << std::endl;
-  printf("process_string request from clt %d\n", clt);
   size_t sz = (1 << 15);    // 32k
   r.assign(sz, 0);
   return ret;
 }
-
-
-// Main loop of demo_server
 
 int main(int argc, char const *argv[])
 {
@@ -64,7 +61,7 @@ int main(int argc, char const *argv[])
     }
 
     demo_server ds;  
-    rpcs server(atoi(argv[1]), count);
+    RPCServer server(atoi(argv[1]), count);
     server.reg(demo_protocol::stat, &ds, &demo_server::stat);
     server.reg(demo_protocol::pass_string, &ds, &demo_server::process_string);
 

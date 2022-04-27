@@ -16,7 +16,7 @@ using namespace std;
 // Client interface to the demo server
 class demo_client {
  protected:
-  rpcc *cl;
+  RPCClient *cl;
  public:
   demo_client(const char * port);
   virtual ~demo_client() {};
@@ -26,7 +26,7 @@ class demo_client {
 
 demo_client::demo_client(const char* port)
 {
-  cl = new rpcc("127.0.0.1", port);
+  cl = new RPCClient("127.0.0.1", port);
   if (cl->bind() < 0) {
     printf("demo_client: call bind\n");
   }
@@ -59,12 +59,13 @@ main(int argc, char *argv[])
     exit(1);
   }
 
+  // stat RPC
   demo_client *dc = new demo_client(argv[1]);
   r = dc->stat(1);
-  printf ("stat returned %d\n", r);
+  printf ("[Client] receive \"stat\" result %d.\n", r);
 
-  // pass string
-  ifstream fin("input.txt", ios::in);
+  // read file
+  ifstream fin("demo/input.txt", ios::in);
 	if (!fin.is_open()) {
 		cout << "cannot open file!" << endl;
 		return 0;
@@ -76,10 +77,11 @@ main(int argc, char *argv[])
   }
 	fin.close();
 
+  // pass_string RPC
   uint64_t start, end;
   start = timer::get_usec();
   std::string res = dc->pass_string(arg);
   end = timer::get_usec();
-  printf ("pass %lu buff, returns %lu buff\n", arg.size(), res.size());
-  printf("RPC (RTT) latency: %lu usec\n", (end - start));
+  printf ("[Client] receive \"pass_string\" result %lu bytes.\n", res.size());
+  printf("RPC (RTT) latency: %lu usec.\n", (end - start));
 }

@@ -8,10 +8,10 @@ LDLIBS = -lpthread
 all: demo_server demo_client
 
 demo_server:
-	$(CXX) $(CXXFLAGS) demo_server.cc rpc/*.cc $(LDFLAGS) $(LDLIBS) -o demo_server
+	$(CXX) $(CXXFLAGS) demo/demo_server.cc rpc/*.cc $(LDFLAGS) $(LDLIBS) -o build/demo_server
 
 demo_client:
-	$(CXX) $(CXXFLAGS) demo_client.cc rpc/*.cc $(LDFLAGS) $(LDLIBS) -o demo_client
+	$(CXX) $(CXXFLAGS) demo/demo_client.cc rpc/*.cc $(LDFLAGS) $(LDLIBS) -o build/demo_client
 
 
 clean_files=rpc/*.o rpc/*.d *.o *.d demo_client demo_server

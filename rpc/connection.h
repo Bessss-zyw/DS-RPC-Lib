@@ -15,6 +15,7 @@
 #define MAX_MSG_SZ (10 << 20)    	// maximum MSG size is 10M
 #define MAX_MSG_CNT 10				// maximum MSG number in a single read_cb/write_cb
 
+// one buffer obj for each msg
 struct buffer {
 	char *buf;
 	int sz;
@@ -23,6 +24,8 @@ struct buffer {
 	buffer(): buf(NULL), sz(0), solong(0) {}
 	buffer (char *b, int s) : buf(b), sz(s), solong(0){}
 	~buffer() {}
+
+	// if the buffer is empty
 	bool empty() {
 		if (!buf) {
 			VERIFY(!sz && !solong);
@@ -33,18 +36,21 @@ struct buffer {
 		}
 	}
 
+	// reset buffer ptr and sz
     void reset() {
 		buf = NULL;
 		sz = solong = 0;
     }
 
+	// only called when connection is over
 	void clear() {
         if (buf) free(buf);
 		reset();
 	}
 };
 
-class connection {
+// one connection obj for one socket connection
+class Connection {
 	int fd_;
 	bool dead_;
 	buffer wbuf;    // curr write msg buffer
@@ -52,18 +58,18 @@ class connection {
 	std::queue<buffer> wbufq;    // write msg buffer queue
 	std::queue<buffer> rbufq;    // read msg buffer queue
 
-    bool read_msg();	// read msg to rbuffer, may not complete a msg
-    bool write_msg();	// write wbuffer to a msg, may not complete a msg
+    bool read_msg();			// read msg to rbuffer, may not complete a msg
+    bool write_msg();			// write wbuffer to a msg, may not complete a msg
 
-	pthread_mutex_t m_; 	// protect channel
-	pthread_mutex_t wm_; 	// protect wbuf and wbufq
-	pthread_mutex_t rm_; 	// protect rbuf and rbufq
+	pthread_mutex_t m_; 		// protect channel
+	pthread_mutex_t wm_; 		// protect wbuf and wbufq
+	pthread_mutex_t rm_; 		// protect rbuf and rbufq
 
-	fd_set get_fd_set();
+	fd_set get_fd_set();		// get the fd_set(only include fd_) of connection
 
 public:
-	connection(int fd);
-	~connection();
+	Connection(int fd);
+	~Connection();
 	bool is_dead();
 	int channo();				// connection num is the fd_
 
@@ -75,11 +81,11 @@ public:
 	void add_rbuf(buffer buf);	// produce next rbuf
 	void add_wbuf(buffer buf);	// produce next wbuf
 
-	void read_cb();		// fd_ is ready to be read
-	void write_cb();	// fd_ is ready to be write
+	void read_cb();				// fd_ is ready to be read
+	void write_cb();			// fd_ is ready to be write
 	bool send(char *buf, size_t sz);	// send certain size of data
 	void closeCh();
 };
 
-connection * connect_to_dst(const sockaddr_in &dst);
+Connection * connect_to_dst(const sockaddr_in &dst);
 

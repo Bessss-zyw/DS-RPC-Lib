@@ -13,31 +13,17 @@
 #include "utils/verify.h"
 #include "utils/slock.h"
 
-// rpc server endpoint.
-class rpcs {
-	typedef enum {
-		NEW,  // new RPC, not a duplicate
-		INPROGRESS, // duplicate of an RPC we're still processing
-		DONE, // duplicate of an RPC we already replied to (have reply)
-		FORGOTTEN,  // duplicate of an old RPC whose reply we've forgotten
-	} rpcstate_t;
-
+// RPC server endpoint
+class RPCServer {
 	int port_;		// the port to listen on
 	int tcp_; 		// file desciptor for accepting connection
 	unsigned int sid_;						// server id
 	std::map<int, handler *> procs_;		// handlers
-	std::map<int, connection *> conns_;		// connections
+	std::map<int, Connection *> conns_;		// connections
 
 	// for select
 	fd_set fds;
 	int max_fd = 0;
-
-	// provide at most once semantics by maintaining a window of replies
-	// per client that that client hasn't acknowledged receiving yet.
-	// indexed by client nonce.
-	// std::map<unsigned int, std::list<reply_t> > reply_window_;
-
-	// pthread_mutex_t procs_m_; 	// protect insert/delete to procs[]
 
 	bool tcp_conn(int port);	// create tcp socket
 	void connect();				// start a new connection for a client
@@ -45,20 +31,21 @@ class rpcs {
 	void poll_and_push();		// loop to accept && send msg from each socket
 	void process();				// process all msgs in read buffer
 	void sweep();				// remove all dead connections
-	void process_msg(connection *c, char *buf, size_t sz);		// porcess a single msg
-	void reg1(unsigned int proc, handler *h);
+	void process_msg(Connection *c, char *buf, size_t sz);		// porcess a single msg
+	void reg1(unsigned int proc, handler *h);		// register a single handler
 
 public:
-	rpcs(unsigned int port, int counts=0);
-	~rpcs();
+	RPCServer(unsigned int port, int counts=0);
+	~RPCServer();
 
-	// RPC handler for clients binding
+	// a default RPC handler for client binding
 	int rpcbind(int a, int &r);
 
-	// begin to monitor port
+	// begin to listen on port and process msgs
 	void start();
 
-	// -----------register a handler-----------
+	// TODO: variable-length parameter list
+	// -----------register a handler of different parameters-----------
 	template<class S, class A1, class R>
 		void reg(unsigned int proc, S*, int (S::*meth)(const A1 a1, R & r));
 	template<class S, class A1, class A2, class R>
@@ -90,7 +77,7 @@ public:
 
 // -----------register a handler-----------
 template<class S, class A1, class R> void
-rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, R & r))
+RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, R & r))
 {
 	class h1 : public handler {
 		private:
@@ -114,7 +101,7 @@ rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, R & r))
 }
 
 template<class S, class A1, class A2, class R> void
-rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			R & r))
 {
 	class h1 : public handler {
@@ -141,7 +128,7 @@ rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2,
 }
 
 template<class S, class A1, class A2, class A3, class R> void
-rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			const A3 a3, R & r))
 {
 	class h1 : public handler {
@@ -170,7 +157,7 @@ rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2,
 }
 
 template<class S, class A1, class A2, class A3, class A4, class R> void
-rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			const A3 a3, const A4 a4, 
 			R & r))
 {
@@ -203,7 +190,7 @@ rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2,
 }
 
 template<class S, class A1, class A2, class A3, class A4, class A5, class R> void
-rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			const A3 a3, const A4 a4, 
 			const A5 a5, R & r))
 {
@@ -239,7 +226,7 @@ rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2,
 }
 
 template<class S, class A1, class A2, class A3, class A4, class A5, class A6, class R> void
-rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			const A3 a3, const A4 a4, 
 			const A5 a5, const A6 a6, 
 			R & r))
@@ -279,7 +266,7 @@ rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2,
 
 template<class S, class A1, class A2, class A3, class A4, class A5, 
 	class A6, class A7, class R> void
-rpcs::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
+RPCServer::reg(unsigned int proc, S*sob, int (S::*meth)(const A1 a1, const A2 a2, 
 			const A3 a3, const A4 a4, 
 			const A5 a5, const A6 a6,
 			const A7 a7, R & r))
