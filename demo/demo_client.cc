@@ -26,7 +26,7 @@ class demo_client {
 
 demo_client::demo_client(const char* port)
 {
-  cl = new RPCC("127.0.0.1", port);
+  cl = new RPCC("127.0.0.1", atoi(port));
   if (cl->bind() < 0) {
     printf("demo_client: call bind\n");
   }

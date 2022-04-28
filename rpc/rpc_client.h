@@ -39,7 +39,7 @@ private:
 	void process_msg(Connection *c, char *buf, size_t sz);  // process single msg from server
 
 public:
-    RPCC(const char *host, const char *port);
+    RPCC(const char *host, unsigned int port);
     ~RPCC();
 	unsigned int id() { return cid_; }
     int bind(TO to = rpc_const::to_max);    // a sample RPC call to bind with server

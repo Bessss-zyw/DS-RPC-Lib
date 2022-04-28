@@ -26,7 +26,7 @@ void *poll_thread(void *arg)
     return NULL;
 }
 
-RPCC::RPCC(const char *host, const char *port)
+RPCC::RPCC(const char *host, unsigned int port)
     :rid_(1), sid_(0), bind_done_(false)
 {
     // parse address
@@ -44,7 +44,7 @@ RPCC::RPCC(const char *host, const char *port)
 		}
 		dst_.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
 	}
-	dst_.sin_port = htons(atoi(port));
+	dst_.sin_port = htons(port);
 
     // initialize mutex
     VERIFY(pthread_mutex_init(&m_, 0) == 0);
