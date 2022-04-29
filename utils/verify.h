@@ -1,3 +1,4 @@
+#pragma once
 // safe assertions.
 
 #ifndef verify_client_h

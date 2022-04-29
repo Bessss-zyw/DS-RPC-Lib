@@ -1,3 +1,4 @@
+#pragma once
 // compile time version of min and max
 
 #ifndef algorithm_h

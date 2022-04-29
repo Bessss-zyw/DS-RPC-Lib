@@ -1,3 +1,4 @@
+#pragma once
 #ifndef __SCOPED_LOCK__
 #define __SCOPED_LOCK__
 
