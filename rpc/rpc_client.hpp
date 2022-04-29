@@ -79,20 +79,20 @@ private:
         // printf("RPCC::call1 [CLT %u] just sent req rid %u(proc %x)\n", cid_, ca.rid, proc); 
 
         // wait for reply
-        while (!ca.done)
-        {
+        while (!ca.done) {
             // set timeout
             clock_gettime(CLOCK_REALTIME, &now);
             add_timespec(now, rpc_const::to_min, &nextDDL); 
-            if(cmp_timespec(nextDDL,finalDDL) > 0){
-                nextDDL = finalDDL;
-                finalDDL.tv_sec = 0;
-            }
-
-            // printf("RPCC:call1: wait for reply\n");
-            if(pthread_cond_timedwait(&ca.c, &ca.m, &nextDDL) == ETIMEDOUT){
-                printf("RPCC::call1: timeout\n");
-                return rpc_const::timeout_failure;
+            
+            if(cmp_timespec(nextDDL, finalDDL) > 0){
+                // printf("RPCC:call1: wait for reply\n");
+                if(pthread_cond_timedwait(&ca.c, &ca.m, &finalDDL) == ETIMEDOUT){
+                    printf("RPCC::call1: timeout\n");
+                    return rpc_const::timeout_failure;
+                }
+            } else {
+                // printf("RPCC:call1: wait for reply\n");
+                pthread_cond_timedwait(&ca.c, &ca.m, &nextDDL);
             }
         }
 
