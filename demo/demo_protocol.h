@@ -1,5 +1,5 @@
 // demo protocol
-#include "rpc/rpc_server.h"
+#include "rpc/rpc_server.hpp"
 #include "utils/timer.h"
 
 class demo_protocol {

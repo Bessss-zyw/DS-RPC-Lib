@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 #include "demo_protocol.h"
-#include "rpc/rpc_client.h"
+#include "rpc/rpc_client.hpp"
 
 using namespace std;
 
