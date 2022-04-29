@@ -92,7 +92,7 @@ private:
             // printf("RPCC:call1: wait for reply\n");
             if(pthread_cond_timedwait(&ca.c, &ca.m, &nextDDL) == ETIMEDOUT){
                 printf("RPCC::call1: timeout\n");
-                // return rpc_const::timeout_failure;
+                return rpc_const::timeout_failure;
             }
         }
 
