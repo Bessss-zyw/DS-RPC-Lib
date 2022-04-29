@@ -22,7 +22,7 @@ clean:
 # use lib
 # all: rpc/librpc.a demo_client demo_server
 
-# rpclib=rpc/rpc.cc rpc/connection.cc rpc/pollmgr.cc rpc/thr_pool.cc rpc/jsl_log.cc rpc/gettime.cc
+# rpclib=rpc/rpc.cc rpc/connection.hpp rpc/pollmgr.cc rpc/thr_pool.cc rpc/jsl_log.cc rpc/gettime.cc
 # rpc/librpc.a: $(patsubst %.cc,%.o,$(rpclib))
 # 	rm -f $@
 # 	ar cq $@ $^

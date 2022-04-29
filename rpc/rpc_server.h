@@ -9,7 +9,7 @@
 #include <shared_mutex>
 
 #include "common.h"
-#include "connection.h"
+#include "connection.hpp"
 #include "utils/verify.h"
 #include "utils/slock.h"
 

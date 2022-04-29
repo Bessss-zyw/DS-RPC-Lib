@@ -2,7 +2,7 @@
 #include <netdb.h>
 
 #include "common.h"
-#include "connection.h"
+#include "connection.hpp"
 
 #define MAX_TIMEOUT rpc_const::to_max
 

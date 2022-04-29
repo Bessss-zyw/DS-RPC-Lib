@@ -57,8 +57,8 @@ RPCC::RPCC(const char *host, unsigned int port)
 	cid_ = random();
     
     // connect to target server
-    ch = connect_to_dst(dst_);
-    if (!ch) {
+    ch = new Connection(dst_);
+    if (!ch || ch->channo() < 0) {
         printf("RPCC::RPCC fail to connect with remote addr\n");
         exit(0);
     }
