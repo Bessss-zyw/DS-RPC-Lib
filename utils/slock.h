@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __SCOPED_LOCK__
-#define __SCOPED_LOCK__
+// #ifndef __SCOPED_LOCK__
+// #define __SCOPED_LOCK__
 
 #include <pthread.h>
 #include "verify.h"
@@ -15,4 +15,4 @@ struct ScopedLock {
 			VERIFY(pthread_mutex_unlock(m_)==0);
 		}
 };
-#endif  /*__SCOPED_LOCK__*/
+// #endif  /*__SCOPED_LOCK__*/
